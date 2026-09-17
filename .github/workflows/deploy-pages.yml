@@ -37,6 +37,10 @@ jobs:
           from pathlib import Path
           p=Path('_site/index.html')
           s=p.read_text(encoding='utf-8')
+          # Strengthen WhatsApp/Open Graph metadata before any scripts/styles.
+          s=s.replace('<meta property="og:type" content="website">', '<meta property="og:type" content="website">\n<meta property="og:url" content="https://div00007.github.io/ganpati-visarjan-2026/">\n<meta property="og:locale" content="en_IN">')
+          s=s.replace('<meta property="og:image" content="https://div00007.github.io/ganpati-visarjan-2026/assets/og-preview.jpg">', '<meta property="og:image" content="https://div00007.github.io/ganpati-visarjan-2026/assets/og-preview.jpg?v=20260918-2">\n<meta property="og:image:secure_url" content="https://div00007.github.io/ganpati-visarjan-2026/assets/og-preview.jpg?v=20260918-2">\n<meta property="og:image:type" content="image/jpeg">')
+          s=s.replace('<meta name="twitter:card" content="summary_large_image">', '<meta name="twitter:card" content="summary_large_image">\n<meta name="twitter:title" content="Bappa’s Final Journey • Babaria Family">\n<meta name="twitter:description" content="Ganpati Visarjan • 19 September 2026 • 5:00 PM • Umerkhadi, Mumbai">\n<meta name="twitter:image" content="https://div00007.github.io/ganpati-visarjan-2026/assets/og-preview.jpg?v=20260918-2">\n<link rel="canonical" href="https://div00007.github.io/ganpati-visarjan-2026/">')
           # Final wording cleanup for undated older family photos.
           s=s.replace(">Archive<", ">Earlier Memory<")
           s=s.replace("'Archive'", "'Earlier Memory'")
