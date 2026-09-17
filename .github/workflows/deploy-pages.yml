@@ -24,26 +24,37 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Prepare website from uploaded ZIP
+      - name: Prepare mobile-optimized website
         shell: bash
         run: |
           set -euo pipefail
           ZIP_FILE=$(find . -maxdepth 1 -type f -name 'Babaria_Ganpati_Visarjan_2026_FIXED_GitHub_v3_ShuffleFinal*.zip' | head -n 1)
-          if [ -z "$ZIP_FILE" ]; then
-            echo "Website ZIP not found"
-            exit 1
-          fi
-          rm -rf _site
-          mkdir -p _site
+          if [ -z "$ZIP_FILE" ]; then echo "Website ZIP not found"; exit 1; fi
+          rm -rf _site && mkdir -p _site
           unzip -q "$ZIP_FILE" -d _site
+          rm -f _site/assets/photos/photo-006.webp
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('_site/index.html')
+          s=p.read_text(encoding='utf-8')
+          remove='assets/photos/photo-006.webp'
+          s=s.replace('const photos=', 'const photosRaw=', 1)
+          s=s.replace('const coverPhotos=', f"const photos=photosRaw.filter(p=>p.src!=='{remove}');\nconst coverPhotos=", 1)
+          s=s.replace('186 photographs','185 photographs')
+          s=s.replace('<div class="gallery" id="gallery"></div>\n  <button class="more" id="moreBtn">Show more memories</button>', '<div class="gallery-actions"><button class="browse-btn" id="browseBtn">Browse Photos</button><button class="viewall-btn" id="viewAllBtn">View All Photos</button></div><div class="gallery-wrap" id="galleryWrap"><div class="gallery" id="gallery"></div><button class="more" id="moreBtn">Show more memories</button></div>')
+          css='''\n.gallery-actions{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0 4px}.browse-btn,.viewall-btn{border:0;border-radius:999px;padding:12px 17px;font-weight:850;cursor:pointer;min-height:46px}.browse-btn{background:var(--wine);color:white}.viewall-btn{background:#fff9ef;color:var(--wine);border:1px solid #d7c3a4}.gallery-wrap{display:none}.gallery-wrap.open{display:block}@media(max-width:760px){section{padding:62px 16px}.gallery-actions{display:grid;grid-template-columns:1fr 1fr}.filter{display:none}.gallery{columns:2 145px;column-gap:8px;margin-top:18px}.photo{margin-bottom:8px;border-radius:12px}.badge{font-size:.62rem;padding:5px 7px}.featured{min-height:350px;height:55vh;border-radius:20px}.lightbox{padding:8px}.lightbox img{max-width:100vw;max-height:82vh}}@media(max-width:390px){.gallery{columns:1}.gallery-actions{grid-template-columns:1fr}}\n'''
+          s=s.replace('</style>',css+'</style>')
+          needle='moreBtn.onclick=()=>{visible+=30;render()};render();'
+          repl=needle+'''\nconst galleryWrap=document.getElementById('galleryWrap'),viewAllBtn=document.getElementById('viewAllBtn'),browseBtn=document.getElementById('browseBtn');viewAllBtn.onclick=()=>{const opening=!galleryWrap.classList.contains('open');galleryWrap.classList.toggle('open');viewAllBtn.textContent=opening?'Hide All Photos':'View All Photos';if(opening){visible=30;render();setTimeout(()=>galleryWrap.scrollIntoView({behavior:'smooth',block:'start'}),80)}};browseBtn.onclick=()=>{currentList=filtered();if(currentList.length)openLightbox(0)};'''
+          s=s.replace(needle,repl)
+          p.write_text(s,encoding='utf-8')
+          PY
           test -f _site/index.html
-          test -d _site/assets
           touch _site/.nojekyll
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
