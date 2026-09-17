@@ -33,6 +33,24 @@ jobs:
           rm -rf _site && mkdir -p _site
           unzip -q "$ZIP_FILE" -d _site
           test -f _site/index.html
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('_site/index.html')
+          s=p.read_text(encoding='utf-8')
+          # Final wording cleanup for undated older family photos.
+          s=s.replace(">Archive<", ">Earlier Memory<")
+          s=s.replace("'Archive'", "'Earlier Memory'")
+          s=s.replace('"Archive"', '"Earlier Memory"')
+          # Keep the floating music control away from the gallery buttons on phones.
+          css = """
+          @media(max-width:760px){
+            .sound{position:fixed!important;right:12px!important;bottom:14px!important;top:auto!important;z-index:90!important;max-width:none!important;padding:10px 13px!important;font-size:.82rem!important;box-shadow:0 8px 24px rgba(45,8,8,.28)}
+            .gallery-actions{padding-right:0!important}
+          }
+          """
+          s=s.replace('</style>', css+'</style>')
+          p.write_text(s,encoding='utf-8')
+          PY
           touch _site/.nojekyll
 
       - name: Configure GitHub Pages
